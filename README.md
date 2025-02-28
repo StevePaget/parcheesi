@@ -4,6 +4,8 @@
 
 My aim is to create a Python (tkinter) version of the board game Parcheesi which can be played by up to 4 players (or have computer players filling the spaces) over a local network.
 
+![alt text](https://github.com/StevePaget/parcheesi/blob/main/parcheesi.jpg?raw=true "A Parcheesi Board")
+
 Rules I will implement:
 Players have 4 tokens which start off in their start area. The aim is to move the tokens to the centre of the board, moving anti-clockwise along the outer track, until they reach the centre.
 
