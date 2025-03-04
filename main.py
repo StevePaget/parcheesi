@@ -1,6 +1,6 @@
 import tkinter as tk
 import tkinter.font as tkFont
-
+import math
 
 class App(tk.Tk):
     def __init__(self):
@@ -15,8 +15,11 @@ class App(tk.Tk):
         self.columnconfigure(1,weight=100)
         self.addConnectionFrame()
         self.makeBoard()
-        self.drawGrid()
         self.showFrame(0)
+        #self.theCanvas.bind("<Button>",self.clicking)
+        self.theCanvas.bind("<Motion>",self.testmouse)
+        self.makePosArrays()
+        self.highlights = []
         self.mainloop()
 
 
@@ -37,6 +40,26 @@ class App(tk.Tk):
             else:
                 self.frames[f].grid_forget()
 
+    def testmouse(self,e):
+        nearestDist = math.inf
+        nearestPos = None
+        for square in range(1,69):
+            p1 = self.positions[square][0]
+            p2 = self.positions[square][1]
+            dist = math.sqrt((p1[0]-e.x)**2 + (p1[1]-e.y)**2)
+            if dist < nearestDist:
+                nearestDist = dist
+                nearestPos = square,p1
+            dist = math.sqrt((p2[0]-e.x)**2 + (p2[1]-e.y)**2)
+            if dist < nearestDist:
+                nearestDist = dist
+                nearestPos = square,p2
+        for h in self.highlights:
+            self.theCanvas.delete(h)
+        self.highlights.append(self.theCanvas.create_oval(nearestPos[1][0],nearestPos[1][1],nearestPos[1][0]+20,nearestPos[1][1]+20,fill="green" ))
+
+        
+
     def addConnectionFrame(self):
         self.connectionFrame = tk.Frame(self, bg="#dba6ea")
         cl1 = tk.Label(self.connectionFrame, text="Connecting to game", font=self.titlefont,bg="#dba6ea")
@@ -51,7 +74,58 @@ class App(tk.Tk):
         self.connectionFrame.rowconfigure(4,weight=20)
         self.connectionFrame.columnconfigure(0,weight=100)
 
-    def drawGrid(self,):
-        for i in range(0,1000,43):
-            self.theCanvas.create_line(0,self.boardBuffer + i,1000, self.boardBuffer + i,fill="black")
+    def makePosArrays(self):
+        f = open("places.txt","r")
+        line = f.read()
+        lines = line.split("-")
+        self.positions = [None]
+        pos = 0
+        while pos < len(lines)-1:
+            self.positions.append((eval(lines[pos]),eval(lines[pos+1])))
+            pos += 2
+
+        f = open("red.txt","r")
+        line = f.read()
+        lines = line.split("-")
+        self.redpos = []
+        pos = 0
+        while pos < len(lines)-1:
+            self.redpos.append((eval(lines[pos]),eval(lines[pos+1])))
+            pos += 2
+
+        f = open("green.txt","r")
+        line = f.read()
+        lines = line.split("-")
+        self.greenpos = []
+        pos = 0
+        while pos < len(lines)-1:
+            self.greenpos.append((eval(lines[pos]),eval(lines[pos+1])))
+            pos += 2
+
+
+        f = open("yellow.txt","r")
+        line = f.read()
+        lines = line.split("-")
+        self.yellowpos = []
+        pos = 0
+        while pos < len(lines)-1:
+            self.yellowpos.append((eval(lines[pos]),eval(lines[pos+1])))
+            pos += 2
+
+        f = open("blue.txt","r")
+        line = f.read()
+        lines = line.split("-")
+        self.bluepos = []
+        pos = 0
+        while pos < len(lines)-1:
+            self.bluepos.append((eval(lines[pos]),eval(lines[pos+1])))
+            pos += 2
+
+    def clicking(self,e):
+        f = open("blue.txt","a")
+        f.write(f"({e.x},{e.y})-")
+        f.close()
+        print(e.x, e.y)
+        self.theCanvas.create_rectangle(e.x-10,e.y-10,e.x+10, e.y+10,fill="red")
+
 game = App()
