@@ -2,6 +2,21 @@ import tkinter as tk
 import tkinter.font as tkFont
 import math
 
+
+class Position:
+    def __init__(self,x1,y1,x2,y2,name):
+        self.coords = ((x1,y1),(x2,y2)) # coordinates for the two possible positions in this space
+        self.name = name
+        self.contents = [None, None] # the Pieces in this position
+
+
+class Piece:
+    def __int__(self,player, position):
+        self.position = position
+        self.player = player
+        colours = ["green","yellow","blue","red"]
+        self.pieceID = self.theCanvas.create_oval(self.position.x-10,self.position.y-10,self.position.x+10,self.position.y+10,fill=colours[player])
+
 class App(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
@@ -16,10 +31,11 @@ class App(tk.Tk):
         self.addConnectionFrame()
         self.makeBoard()
         self.showFrame(0)
-        #self.theCanvas.bind("<Button>",self.clicking)
-        self.theCanvas.bind("<Motion>",self.testmouse)
+        #self.theCanvas.bind("<Motion>",self.testmouse)
+        self.allPositions = []
         self.makePosArrays()
         self.highlights = []
+        self.currentPlayer = 2
         self.mainloop()
 
 
@@ -43,17 +59,17 @@ class App(tk.Tk):
     def testmouse(self,e):
         nearestDist = math.inf
         nearestPos = None
-        for square in range(1,69):
-            p1 = self.positions[square][0]
-            p2 = self.positions[square][1]
+        for pos in range(len(self.positions[self.currentPlayer])):
+            p1 = self.positions[self.currentPlayer][pos][0]
+            p2 = self.positions[self.currentPlayer][pos][1]
             dist = math.sqrt((p1[0]-e.x)**2 + (p1[1]-e.y)**2)
             if dist < nearestDist:
                 nearestDist = dist
-                nearestPos = square,p1
+                nearestPos = pos,p1
             dist = math.sqrt((p2[0]-e.x)**2 + (p2[1]-e.y)**2)
             if dist < nearestDist:
                 nearestDist = dist
-                nearestPos = square,p2
+                nearestPos = pos,p2
         for h in self.highlights:
             self.theCanvas.delete(h)
         self.highlights.append(self.theCanvas.create_oval(nearestPos[1][0],nearestPos[1][1],nearestPos[1][0]+20,nearestPos[1][1]+20,fill="green" ))
@@ -78,48 +94,99 @@ class App(tk.Tk):
         f = open("places.txt","r")
         line = f.read()
         lines = line.split("-")
-        self.positions = [None]
         pos = 0
+        mainrun = [None]
         while pos < len(lines)-1:
-            self.positions.append((eval(lines[pos]),eval(lines[pos+1])))
+            p1 = [int(p) for p in lines[pos][1:-1].split(",")]
+            p2 = [int(p) for p in lines[pos+1][1:-1].split(",")]
+            mainrun.append(Position(p1[0],p1[1],p2[0],p2[1],str((pos//2)+1)))
             pos += 2
 
         f = open("red.txt","r")
         line = f.read()
         lines = line.split("-")
-        self.redpos = []
-        pos = 0
-        while pos < len(lines)-1:
-            self.redpos.append((eval(lines[pos]),eval(lines[pos+1])))
-            pos += 2
+        reds = []
+        p1 = [int(p) for p in lines[0][1:-1].split(",")]
+        p2 = [int(p) for p in lines[1][1:-1].split(",")]
+        self.redStart = Position(p1[0],p1[1],p2[0],p2[1], "redStart12")
+        reds.append(self.redStart)
+        p1 = [int(p) for p in lines[2][1:-1].split(",")]
+        p2 = [int(p) for p in lines[3][1:-1].split(",")]
+        newPos = Position(p1[0],p1[1],p2[0],p2[1], "redStart34")
+        reds.append(newPos)
+        reds = reds + mainrun[39:] + mainrun[1:35]
+        for linenum in range(4,len(lines),2):
+            p1 = [int(p) for p in lines[linenum][1:-1].split(",")]
+            p2 = [int(p) for p in lines[linenum+1][1:-1].split(",")]
+            newPos = Position(p1[0],p1[1],p2[0],p2[1], "redEnd")
+            reds.append(newPos)
+
+        #self.testrun(reds,"red")
 
         f = open("green.txt","r")
         line = f.read()
         lines = line.split("-")
-        self.greenpos = []
-        pos = 0
-        while pos < len(lines)-1:
-            self.greenpos.append((eval(lines[pos]),eval(lines[pos+1])))
-            pos += 2
+        greens = []
+        p1 = [int(p) for p in lines[0][1:-1].split(",")]
+        p2 = [int(p) for p in lines[1][1:-1].split(",")]
+        self.greenStart = Position(p1[0],p1[1],p2[0],p2[1], "greenStart12")
+        greens.append(self.greenStart)
+        p1 = [int(p) for p in lines[2][1:-1].split(",")]
+        p2 = [int(p) for p in lines[3][1:-1].split(",")]
+        newPos = Position(p1[0],p1[1],p2[0],p2[1], "greenStart34")
+        greens.append(newPos)
+        greens = greens + mainrun[5:69]
+        for linenum in range(4,len(lines),2):
+            p1 = [int(p) for p in lines[linenum][1:-1].split(",")]
+            p2 = [int(p) for p in lines[linenum+1][1:-1].split(",")]
+            newPos = Position(p1[0],p1[1],p2[0],p2[1], "greenEnd")
+            greens.append(newPos)
 
-
-        f = open("yellow.txt","r")
-        line = f.read()
-        lines = line.split("-")
-        self.yellowpos = []
-        pos = 0
-        while pos < len(lines)-1:
-            self.yellowpos.append((eval(lines[pos]),eval(lines[pos+1])))
-            pos += 2
+        #self.testrun(greens,"lightgreen")
 
         f = open("blue.txt","r")
         line = f.read()
         lines = line.split("-")
-        self.bluepos = []
-        pos = 0
-        while pos < len(lines)-1:
-            self.bluepos.append((eval(lines[pos]),eval(lines[pos+1])))
-            pos += 2
+        blues = []
+        p1 = [int(p) for p in lines[0][1:-1].split(",")]
+        p2 = [int(p) for p in lines[1][1:-1].split(",")]
+        self.blueStart = Position(p1[0],p1[1],p2[0],p2[1], "blueStart12")
+        blues.append(self.blueStart)
+        p1 = [int(p) for p in lines[2][1:-1].split(",")]
+        p2 = [int(p) for p in lines[3][1:-1].split(",")]
+        newPos = Position(p1[0],p1[1],p2[0],p2[1], "blueStart34")
+        blues.append(newPos)
+        blues = blues + mainrun[22:69] + mainrun[1:18]
+        for linenum in range(4,len(lines),2):
+            p1 = [int(p) for p in lines[linenum][1:-1].split(",")]
+            p2 = [int(p) for p in lines[linenum+1][1:-1].split(",")]
+            newPos = Position(p1[0],p1[1],p2[0],p2[1], "blueEnd")
+            blues.append(newPos)
+
+        #self.testrun(blues,"lightblue")
+
+        f = open("yellow.txt","r")
+        line = f.read()
+        lines = line.split("-")
+        yellows = []
+        p1 = [int(p) for p in lines[0][1:-1].split(",")]
+        p2 = [int(p) for p in lines[1][1:-1].split(",")]
+        self.yellowStart = Position(p1[0],p1[1],p2[0],p2[1], "yellowStart12")
+        yellows.append(self.yellowStart)
+        p1 = [int(p) for p in lines[2][1:-1].split(",")]
+        p2 = [int(p) for p in lines[3][1:-1].split(",")]
+        newPos = Position(p1[0],p1[1],p2[0],p2[1], "yellowStart34")
+        yellows.append(newPos)
+        yellows = yellows + mainrun[56:69] + mainrun[1:52]
+        for linenum in range(4,len(lines),2):
+            p1 = [int(p) for p in lines[linenum][1:-1].split(",")]
+            p2 = [int(p) for p in lines[linenum+1][1:-1].split(",")]
+            newPos = Position(p1[0],p1[1],p2[0],p2[1], "yellowEnd")
+            yellows.append(newPos)
+
+        #self.testrun(yellows,"yellow")
+
+       
 
     def clicking(self,e):
         f = open("blue.txt","a")
@@ -127,5 +194,20 @@ class App(tk.Tk):
         f.close()
         print(e.x, e.y)
         self.theCanvas.create_rectangle(e.x-10,e.y-10,e.x+10, e.y+10,fill="red")
+  
+
+    def testrun(self,run,colour):
+        fig = self.theCanvas.create_oval(0,0,20,20,fill=colour)
+        posnum = 0
+        self.after(300, lambda x=fig: self.nextpos(x, posnum, run))
+    
+    def nextpos(self, fig, posnum,run):
+        pos = run[posnum]
+        self.theCanvas.coords(fig,pos.coords[0][0],pos.coords[0][1],pos.coords[0][0]+20,pos.coords[0][1]+20)
+        posnum +=1
+        if posnum < len(run):
+            self.after(300, lambda x=fig: self.nextpos(x, posnum, run))
+        
+
 
 game = App()
