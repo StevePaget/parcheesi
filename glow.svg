@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="80.87751mm"
+   height="81.886429mm"
+   viewBox="0 0 80.87751 81.886429"
+   version="1.1"
+   id="svg1433"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="glow.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1435"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.4681257"
+     inkscape:cx="135.54698"
+     inkscape:cy="202.29875"
+     inkscape:window-width="1920"
+     inkscape:window-height="1016"
+     inkscape:window-x="0"
+     inkscape:window-y="36"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1430">
+    <filter
+       inkscape:menu-tooltip="In and out glow with a possible offset and colorizable flood"
+       inkscape:menu="Shadows and Glows"
+       inkscape:label=""
+       style="color-interpolation-filters:sRGB"
+       id="filter2146"
+       x="-0.14116697"
+       y="-0.14159034"
+       width="1.2827845"
+       height="1.2837416">
+      <feOffset
+         dy="0"
+         dx="0"
+         id="feOffset2136" />
+      <feGaussianBlur
+         stdDeviation="3"
+         result="blur"
+         id="feGaussianBlur2138" />
+      <feFlood
+         flood-color="rgb(0,0,0)"
+         flood-opacity="1"
+         result="flood"
+         id="feFlood2140" />
+      <feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="in"
+         result="composite"
+         id="feComposite2142" />
+      <feBlend
+         in="blur"
+         in2="composite"
+         mode="normal"
+         id="feBlend2144" />
+    </filter>
+    <filter
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Cut out, add inner shadow and colorize some parts of an image"
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Emergence"
+       id="filter2244"
+       x="-0.14116697"
+       y="-0.14159034"
+       width="1.3414514"
+       height="1.3426085">
+      <feColorMatrix
+         values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.20999999999999999 0.71999999999999997 0.070000000000000007 0 0"
+         result="result1"
+         id="feColorMatrix2216" />
+      <feColorMatrix
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 2 0"
+         result="result9"
+         id="feColorMatrix2218" />
+      <feComposite
+         in2="result9"
+         in="SourceGraphic"
+         operator="in"
+         result="result4"
+         id="feComposite2220" />
+      <feFlood
+         result="result2"
+         flood-color="rgb(0,0,0)"
+         id="feFlood2222" />
+      <feComposite
+         in2="result9"
+         operator="in"
+         result="result10"
+         id="feComposite2224" />
+      <feComposite
+         in2="result4"
+         operator="atop"
+         id="feComposite2226" />
+      <feGaussianBlur
+         stdDeviation="3"
+         result="result8"
+         id="feGaussianBlur2228" />
+      <feOffset
+         dx="3"
+         dy="3"
+         result="result3"
+         in="result8"
+         id="feOffset2230" />
+      <feFlood
+         flood-opacity="1"
+         flood-color="rgb(219,173,62)"
+         result="result5"
+         id="feFlood2232" />
+      <feMerge
+         result="result6"
+         id="feMerge2240">
+        <feMergeNode
+           in="result5"
+           id="feMergeNode2234" />
+        <feMergeNode
+           in="result3"
+           id="feMergeNode2236" />
+        <feMergeNode
+           in="result4"
+           id="feMergeNode2238" />
+      </feMerge>
+      <feComposite
+         in2="SourceGraphic"
+         operator="in"
+         result="result7"
+         id="feComposite2242" />
+    </filter>
+    <filter
+       inkscape:menu-tooltip="In and out glow with a possible offset and colorizable flood"
+       inkscape:menu="Shadows and Glows"
+       inkscape:label="Cutout Glow"
+       style="color-interpolation-filters:sRGB"
+       id="filter2256"
+       x="-0.11001153"
+       y="-0.1110369"
+       width="1.2657557"
+       height="1.267972">
+      <feOffset
+         dy="3"
+         dx="3"
+         id="feOffset2246" />
+      <feGaussianBlur
+         stdDeviation="3"
+         result="blur"
+         id="feGaussianBlur2248" />
+      <feFlood
+         flood-color="rgb(0,0,0)"
+         flood-opacity="1.3877787807814457e-16"
+         result="flood"
+         id="feFlood2250" />
+      <feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="in"
+         result="composite"
+         id="feComposite2252" />
+      <feBlend
+         in="blur"
+         in2="composite"
+         mode="normal"
+         id="feBlend2254" />
+    </filter>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-29.794067,-77.221011)">
+    <path
+       sodipodi:type="star"
+       style="fill:#fbfea3;fill-opacity:1;stroke:#1b1b1b;stroke-width:0.176;stroke-dasharray:none;filter:url(#filter2256)"
+       id="path1606"
+       inkscape:flatsided="false"
+       sodipodi:sides="6"
+       sodipodi:cx="55.202236"
+       sodipodi:cy="100.46055"
+       sodipodi:r1="33.895905"
+       sodipodi:r2="14.620207"
+       sodipodi:arg1="0.79214291"
+       sodipodi:arg2="0.64990451"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="M 79.008058,124.58968 66.841991,109.30739 46.208702,133.14156 53.360526,114.96429 22.402881,109.01243 41.720772,106.11745 31.396414,76.331413 43.562482,91.613709 64.19577,67.779534 57.043946,85.956806 88.001592,91.90867 68.683701,94.803645 Z"
+       inkscape:transform-center-x="0.79181712"
+       inkscape:transform-center-y="-1.5337625"
+       transform="matrix(0.97405298,0,0,0.98804501,15.001839,17.422613)" />
+  </g>
+</svg>

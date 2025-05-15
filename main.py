@@ -4,8 +4,10 @@ import math
 from collections import defaultdict
 
 class Gamestate:
-    def __init__(self, posArrays, canvas):
-        self.players = [Player(i, posArrays[i], canvas) for i in range(4)]
+    def __init__(self, posArrays, main):
+        self.players = [Player(i, posArrays[i], main) for i in range(4)]
+        self.currentPlayer = 0
+        self.turnStatus = 0
 
 
 class Dice:
@@ -62,7 +64,8 @@ class Piece:
             return False
         
     def highlight(self,e):
-        self.main.theCanvas.itemconfig(self.pieceID, image = self.image2)
+        if self.main.gamestate.currentPlayer == self.player and self.main.turnstatus == 1:
+            self.main.theCanvas.itemconfig(self.pieceID, image = self.image2)
 
     def unhighlight(self,e):
         self.main.theCanvas.itemconfig(self.pieceID, image = self.image)
@@ -280,6 +283,29 @@ class App(tk.Tk):
         # make the pieces and put them in the correct positions
         self.gamestate = Gamestate(self.makePosArrays(), self)
         self.sortlayers()
+        self.turnCounterImage = tk.PhotoImage(file = "turnbutton.png")
+        self.ghostImage = tk.PhotoImage(file="ghost.png")
+        self.ghosts = set()
+        self.ghoststate = True
+        self.turnCounter = self.theCanvas.create_image(0,0,image = self.turnCounterImage)
+        self.updateTurnCounter()
+        self.turnstatus = 0
+        self.addGhost(5,1)
+        self.addGhost(5,0)
+        self.addGhost(12,1)
+        self.flashingGhosts = True
+        self.flashGhosts()
+        # the game loop is run on the following events
+        # turn status 0: Waiting for dice roll
+        # turn status 1: Dice rolled, waiting for player piece choice
+        # turn status 2: Piece chosen. Display target positions. Waiting for choice of destination
+        # turn status 3: Destination chosen. Move piece. Deal with bounces.
+        #                Deduct die value from choices and repeat status 1 if necessary
+        # turn status 4: Turn complete. Detect if game won. Switch players, go to status 0
+
+    def displayMessage(self, message):
+        self.infoBox.config(text=message)
+
 
     def clicking(self,e):
         f = open("blue.txt","a")
@@ -307,5 +333,23 @@ class App(tk.Tk):
         for p in listofPieces:
             print(p.position.coords[p.side])
             self.theCanvas.tag_raise(p.pieceID)
+
+    def updateTurnCounter(self):
+        self.displayMessage(f"Player {self.gamestate.currentPlayer + 1}\n\nPlease roll the dice.")
+        positions = [(200,200), (200,800),(800,200),(800,800)]
+        self.theCanvas.coords(self.turnCounter, positions[self.gamestate.currentPlayer][0], positions[self.gamestate.currentPlayer][1])
+
+    def addGhost(self,pos,side):
+        self.ghosts.add(self.theCanvas.create_image(self.gamestate.players[self.gamestate.currentPlayer].posarray[pos].coords[side][0],self.gamestate.players[self.gamestate.currentPlayer].posarray[pos].coords[side][1],image=self.ghostImage))
+
+    def flashGhosts(self):
+        if self.flashingGhosts:
+            for g in self.ghosts:
+                if self.ghoststate:
+                    self.theCanvas.itemconfig(g,state="hidden")
+                else:
+                    self.theCanvas.itemconfig(g,state="normal")
+            self.ghoststate = not self.ghoststate
+            self.after(500,self.flashGhosts)
 
 game = App()

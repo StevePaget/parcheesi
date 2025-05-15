@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="136.17274mm"
+   height="136.17274mm"
+   viewBox="0 0 136.17274 136.17274"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="turnbutton.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.0381216"
+     inkscape:cx="252.86054"
+     inkscape:cy="348.70673"
+     inkscape:window-width="1920"
+     inkscape:window-height="1016"
+     inkscape:window-x="0"
+     inkscape:window-y="36"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2">
+    <filter
+       inkscape:label="Button"
+       inkscape:menu="Bevels"
+       inkscape:menu-tooltip="Soft bevel, slightly depressed middle"
+       style="color-interpolation-filters:sRGB"
+       id="filter1137"
+       x="-0.42663836"
+       y="-0.42663836"
+       width="1.8532767"
+       height="1.8532767">
+      <feGaussianBlur
+         stdDeviation="2.3"
+         in="SourceAlpha"
+         result="result0"
+         id="feGaussianBlur1111" />
+      <feMorphology
+         in="SourceAlpha"
+         radius="0"
+         result="result1"
+         id="feMorphology1113"
+         operator="dilate" />
+      <feGaussianBlur
+         stdDeviation="8.9"
+         in="result1"
+         id="feGaussianBlur1115" />
+      <feColorMatrix
+         values="0.50000000000000011"
+         result="result91"
+         id="feColorMatrix1117"
+         type="hueRotate" />
+      <feComposite
+         in="result0"
+         operator="out"
+         result="result2"
+         in2="result91"
+         id="feComposite1119" />
+      <feGaussianBlur
+         stdDeviation="1.7"
+         result="result4"
+         id="feGaussianBlur1121" />
+      <feDiffuseLighting
+         surfaceScale="10"
+         id="feDiffuseLighting1125"
+         diffuseConstant="1.56332755"
+         lighting-color="#ffffff">
+        <feDistantLight
+           azimuth="208"
+           elevation="92"
+           id="feDistantLight1123" />
+      </feDiffuseLighting>
+      <feBlend
+         in2="SourceGraphic"
+         mode="multiply"
+         id="feBlend1127" />
+      <feComposite
+         in2="SourceAlpha"
+         operator="in"
+         result="result3"
+         id="feComposite1129" />
+      <feSpecularLighting
+         in="result4"
+         surfaceScale="5"
+         specularExponent="17.89999962"
+         id="feSpecularLighting1133">
+        <feDistantLight
+           azimuth="225"
+           elevation="45"
+           id="feDistantLight1131" />
+      </feSpecularLighting>
+      <feComposite
+         in2="result3"
+         operator="atop"
+         id="feComposite1135" />
+    </filter>
+  </defs>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer 2"
+     transform="translate(-31.746148,-62.797906)" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-31.746148,-62.797906)">
+    <circle
+       style="fill:#f6f6f6;fill-opacity:1;stroke:#000000;stroke-width:0.775999;filter:url(#filter1137)"
+       id="path236"
+       cx="99.83252"
+       cy="130.88428"
+       r="36.738373" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:19.3282px;font-family:FreeMono;-inkscape-font-specification:'FreeMono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ffffff;fill-opacity:1;stroke:#1b1b1b;stroke-width:0.66431;stroke-opacity:1"
+       x="-47.650696"
+       y="157.18037"
+       id="text292"
+       transform="matrix(0.7262212,-0.68849546,0.7262212,0.68849546,0,0)"><tspan
+         sodipodi:role="line"
+         id="tspan404"
+         x="-47.650696"
+         y="157.18037"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1b1b1b;stroke-width:0.66431;stroke-opacity:1">Your</tspan><tspan
+         sodipodi:role="line"
+         id="tspan406"
+         x="-47.650696"
+         y="181.34062"
+         style="fill:#ffffff;fill-opacity:1;stroke:#1b1b1b;stroke-width:0.66431;stroke-opacity:1">turn</tspan></text>
+  </g>
+</svg>
