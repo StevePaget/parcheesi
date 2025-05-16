@@ -9,17 +9,21 @@ class Gamestate:
         self.currentPlayer = 0
         self.turnstate = 0
         self.currentDice = [0,0]
+        self.selectedPiece = None
 
 class Position:
-    def __init__(self,x1,y1,x2,y2,name):
+    def __init__(self,x1,y1,x2,y2,postype):
         self.coords = ((x1,y1),(x2,y2)) # coordinates for the two possible pieces in this space
-        self.name = name
+        self.type = postype
         self.contents = [None, None] # the Pieces in this position
     
     def removePiece(self, piece): 
         if self.contents[0] == piece:
             self.contents[0] = None
-        if self.contents[1] == piece:
+            if self.contents[1] is not None:
+                self.contents[0] = self.contents[1]
+                self.contents[1] = None
+        elif self.contents[1] == piece:
             self.contents[1] = None
 
     def addPiece(self,piece): # Returns True if successful
@@ -34,6 +38,14 @@ class Position:
         else:
             return False
         return True
+    
+    def canAdd(self,piece):
+        if self.contents[0] is None:
+            return 0
+        elif self.contents[1] is None and piece.player == self.contents[0].player:
+            return 1
+        else:
+            return False
 
 
 class Piece:
@@ -42,16 +54,17 @@ class Piece:
         self.side = side
         self.player = player
         self.main = main
+        self.possiblepositions = []
         colours = ["green","yellow","blue","red"]
-        self.image = tk.PhotoImage(file=colours[self.player]+".png")
-        self.image2 = tk.PhotoImage(file=colours[self.player]+"2.png")
+        self.image = tk.PhotoImage(file="images/" + colours[self.player]+".png")
+        self.image2 = tk.PhotoImage(file="images/" + colours[self.player]+"2.png")
         self.pieceID = main.theCanvas.create_image(self.position.coords[self.side][0],self.position.coords[self.side][1], image=self.image)
         main.theCanvas.tag_bind(self.pieceID, "<Enter>", self.highlight)
         main.theCanvas.tag_bind(self.pieceID, "<Leave>", self.unhighlight)
         main.theCanvas.tag_bind(self.pieceID, "<Button-1>", self.clicked)        
         main.allPieces[self.pieceID] = self
 
-    def move(self, canvas,oldposition, newposition):
+    def move(self,oldposition, newposition):
         if newposition.addPiece(self):
             oldposition.removePiece(self)
             self.main.theCanvas.coords(self.pieceID, self.position.coords[self.side][0],self.position.coords[self.side][1],self.position.coords[self.side][0]+20,self.position.coords[self.side][1]+20)
@@ -60,14 +73,50 @@ class Piece:
             return False
         
     def highlight(self,e):
+        # already selected a different piece?
+        if self.main.gamestate.selectedPiece is not None and self.main.gamestate.selectedPiece != self:
+            return
         if self.main.gamestate.currentPlayer == self.player and self.main.gamestate.turnstate == 1:
             self.main.theCanvas.itemconfig(self.pieceID, image = self.image2)
+            self.getValidPlaces()
 
     def unhighlight(self,e):
-        self.main.theCanvas.itemconfig(self.pieceID, image = self.image)
+        # already selected a different piece?
+        if self.main.gamestate.selectedPiece is not None and self.main.gamestate.selectedPiece != self:
+            return
+        if self.main.gamestate.selectedPiece != self:
+            self.main.theCanvas.itemconfig(self.pieceID, image = self.image)
+            self.main.clearGhosts()
 
     def clicked(self,e):
-        print(self.player)
+        if self.main.gamestate.turnstate == 1:
+            #already got a piece selected?
+            if self.main.gamestate.selectedPiece is not None and self.main.gamestate.selectedPiece != self:
+                self.main.gamestate.selectedPiece.unhighlight(None)
+            #already selected this piece?
+            if self.main.gamestate.selectedPiece == self:
+                self.main.gamestate.selectedPiece = None
+                self.unhighlight(None)
+            else:
+                if len(self.possiblepositions)>0:
+                    self.main.gamestate.selectedPiece = self
+                    print(self)
+
+    def getValidPlaces(self):
+        d1,d2 = self.main.gamestate.currentDice
+        self.possiblepositions = set()
+        # do they have any fives?
+        if d1 == 5 or d2 == 5:
+        # is this piece in the home?
+            if self.position.type == "start":            
+                # check d1
+                if d1 == 5:
+                    pos = self.main.gamestate.players[self.player].posarray[2]
+                    side = pos.canAdd(self)
+                    if side is not False:
+                        self.main.addGhost(pos,side)
+                        self.possiblepositions.add(pos)
+
 
 class Player:
     def __init__(self, playerID,posarray, main):
@@ -80,7 +129,10 @@ class Player:
         self.pieces.append(Piece(playerID, posarray[1], 0, main))
         self.pieces.append(Piece(playerID, posarray[1], 1, main))
 
-
+    def getPosition(self, original, distance):
+        start = self.posarray.index(original)
+        end = self.posarray[start+ distance]
+        return end
 
 class App(tk.Tk):
     def __init__(self):
@@ -105,7 +157,7 @@ class App(tk.Tk):
         self.mainloop()
 
     def makeBoard(self):
-        self.boardImage = tk.PhotoImage(file="board.png")
+        self.boardImage = tk.PhotoImage(file="images/board.png")
         self.theCanvas.create_image(0,0, image = self.boardImage, anchor="nw")
         self.boardBuffer = 52
 
@@ -143,7 +195,7 @@ class App(tk.Tk):
     def loadDice(self):
         self.dice=[None]
         for i in range(1,7):
-            self.dice.append((tk.PhotoImage(file="dice/" + str(i)+".png"),tk.PhotoImage(file="dice/" + str(i)+"a.png")))
+            self.dice.append((tk.PhotoImage(file="images/" + str(i)+".png"),tk.PhotoImage(file="images/" + str(i)+"a.png")))
 
 
     def addConnectionFrame(self):
@@ -184,6 +236,7 @@ class App(tk.Tk):
         if self.gamestate.turnstate == 0:
             d1 = random.randint(1,6)
             d2 = random.randint(1,6)
+            d1=5
             self.diceCanvas.delete(tk.ALL)
             self.diceCanvas.create_image(100,80,image=random.choice(self.dice[d1]))
             self.diceCanvas.create_image(100,210,image=random.choice(self.dice[d2]))
@@ -197,7 +250,7 @@ class App(tk.Tk):
         self.gamestate.turnstate = 1
 
     def makePosArrays(self):
-        f = open("places.txt","r")
+        f = open("textfiles/places.txt","r")
         line = f.read()
         lines = line.split("-")
         pos = 0
@@ -205,89 +258,89 @@ class App(tk.Tk):
         while pos < len(lines)-1:
             p1 = [int(p) for p in lines[pos][1:-1].split(",")]
             p2 = [int(p) for p in lines[pos+1][1:-1].split(",")]
-            mainrun.append(Position(p1[0],p1[1],p2[0],p2[1],str((pos//2)+1)))
+            mainrun.append(Position(p1[0],p1[1],p2[0],p2[1],"normal"))
             pos += 2
 
-        f = open("red.txt","r")
+        f = open("textfiles/red.txt","r")
         line = f.read()
         lines = line.split("-")
         reds = []
         p1 = [int(p) for p in lines[0][1:-1].split(",")]
         p2 = [int(p) for p in lines[1][1:-1].split(",")]
-        self.redStart = Position(p1[0],p1[1],p2[0],p2[1], "redStart12")
+        self.redStart = Position(p1[0],p1[1],p2[0],p2[1], "start")
         reds.append(self.redStart)
         p1 = [int(p) for p in lines[2][1:-1].split(",")]
         p2 = [int(p) for p in lines[3][1:-1].split(",")]
-        newPos = Position(p1[0],p1[1],p2[0],p2[1], "redStart34")
+        newPos = Position(p1[0],p1[1],p2[0],p2[1], "start")
         reds.append(newPos)
         reds = reds + mainrun[39:] + mainrun[1:35]
         for linenum in range(4,len(lines),2):
             p1 = [int(p) for p in lines[linenum][1:-1].split(",")]
             p2 = [int(p) for p in lines[linenum+1][1:-1].split(",")]
-            newPos = Position(p1[0],p1[1],p2[0],p2[1], "redEnd")
+            newPos = Position(p1[0],p1[1],p2[0],p2[1], "home")
             reds.append(newPos)
 
         #self.testrun(reds,"red")
 
-        f = open("green.txt","r")
+        f = open("textfiles/green.txt","r")
         line = f.read()
         lines = line.split("-")
         greens = []
         p1 = [int(p) for p in lines[0][1:-1].split(",")]
         p2 = [int(p) for p in lines[1][1:-1].split(",")]
-        self.greenStart = Position(p1[0],p1[1],p2[0],p2[1], "greenStart12")
+        self.greenStart = Position(p1[0],p1[1],p2[0],p2[1], "start")
         greens.append(self.greenStart)
         p1 = [int(p) for p in lines[2][1:-1].split(",")]
         p2 = [int(p) for p in lines[3][1:-1].split(",")]
-        newPos = Position(p1[0],p1[1],p2[0],p2[1], "greenStart34")
+        newPos = Position(p1[0],p1[1],p2[0],p2[1], "start")
         greens.append(newPos)
         greens = greens + mainrun[5:69]
         for linenum in range(4,len(lines),2):
             p1 = [int(p) for p in lines[linenum][1:-1].split(",")]
             p2 = [int(p) for p in lines[linenum+1][1:-1].split(",")]
-            newPos = Position(p1[0],p1[1],p2[0],p2[1], "greenEnd")
+            newPos = Position(p1[0],p1[1],p2[0],p2[1], "home")
             greens.append(newPos)
 
         #self.testrun(greens,"lightgreen")
 
-        f = open("blue.txt","r")
+        f = open("textfiles/blue.txt","r")
         line = f.read()
         lines = line.split("-")
         blues = []
         p1 = [int(p) for p in lines[0][1:-1].split(",")]
         p2 = [int(p) for p in lines[1][1:-1].split(",")]
-        self.blueStart = Position(p1[0],p1[1],p2[0],p2[1], "blueStart12")
+        self.blueStart = Position(p1[0],p1[1],p2[0],p2[1], "start")
         blues.append(self.blueStart)
         p1 = [int(p) for p in lines[2][1:-1].split(",")]
         p2 = [int(p) for p in lines[3][1:-1].split(",")]
-        newPos = Position(p1[0],p1[1],p2[0],p2[1], "blueStart34")
+        newPos = Position(p1[0],p1[1],p2[0],p2[1], "start")
         blues.append(newPos)
         blues = blues + mainrun[22:69] + mainrun[1:18]
         for linenum in range(4,len(lines),2):
             p1 = [int(p) for p in lines[linenum][1:-1].split(",")]
             p2 = [int(p) for p in lines[linenum+1][1:-1].split(",")]
-            newPos = Position(p1[0],p1[1],p2[0],p2[1], "blueEnd")
+            newPos = Position(p1[0],p1[1],p2[0],p2[1], "home")
             blues.append(newPos)
 
         #self.testrun(blues,"lightblue")
 
-        f = open("yellow.txt","r")
+        f = open("textfiles/yellow.txt","r")
         line = f.read()
         lines = line.split("-")
         yellows = []
         p1 = [int(p) for p in lines[0][1:-1].split(",")]
         p2 = [int(p) for p in lines[1][1:-1].split(",")]
-        self.yellowStart = Position(p1[0],p1[1],p2[0],p2[1], "yellowStart12")
+        self.yellowStart = Position(p1[0],p1[1],p2[0],p2[1], "start")
         yellows.append(self.yellowStart)
         p1 = [int(p) for p in lines[2][1:-1].split(",")]
         p2 = [int(p) for p in lines[3][1:-1].split(",")]
-        newPos = Position(p1[0],p1[1],p2[0],p2[1], "yellowStart34")
+        newPos = Position(p1[0],p1[1],p2[0],p2[1], "start")
         yellows.append(newPos)
         yellows = yellows + mainrun[56:69] + mainrun[1:52]
         for linenum in range(4,len(lines),2):
             p1 = [int(p) for p in lines[linenum][1:-1].split(",")]
             p2 = [int(p) for p in lines[linenum+1][1:-1].split(",")]
-            newPos = Position(p1[0],p1[1],p2[0],p2[1], "yellowEnd")
+            newPos = Position(p1[0],p1[1],p2[0],p2[1], "home")
             yellows.append(newPos)
 
         #self.testrun(yellows,"yellow")
@@ -297,8 +350,8 @@ class App(tk.Tk):
         # make the pieces and put them in the correct positions
         self.gamestate = Gamestate(self.makePosArrays(), self)
         self.sortlayers()
-        self.turnCounterImage = tk.PhotoImage(file = "turnbutton.png")
-        self.ghostImage = tk.PhotoImage(file="ghost.png")
+        self.turnCounterImage = tk.PhotoImage(file = "images/turnbutton.png")
+        self.ghostImage = tk.PhotoImage(file="images/ghost.png")
         self.ghosts = set()
         self.ghoststate = True
         self.turnCounter = self.theCanvas.create_image(0,0,image = self.turnCounterImage)
@@ -341,7 +394,6 @@ class App(tk.Tk):
         listofPieces = list(self.allPieces.values())
         listofPieces.sort(key= lambda p: p.position.coords[p.side][1])
         for p in listofPieces:
-            print(p.position.coords[p.side])
             self.theCanvas.tag_raise(p.pieceID)
 
     def updateTurnCounter(self):
@@ -350,8 +402,13 @@ class App(tk.Tk):
         self.theCanvas.coords(self.turnCounter, positions[self.gamestate.currentPlayer][0], positions[self.gamestate.currentPlayer][1])
 
     def addGhost(self,pos,side):
-        self.ghosts.add(self.theCanvas.create_image(self.gamestate.players[self.gamestate.currentPlayer].posarray[pos].coords[side][0],self.gamestate.players[self.gamestate.currentPlayer].posarray[pos].coords[side][1],image=self.ghostImage))
+        self.ghosts.add(self.theCanvas.create_image(pos.coords[side][0],pos.coords[side][1],image=self.ghostImage))
 
+    def clearGhosts(self):
+        for g in self.ghosts:
+            self.theCanvas.delete(g)
+        self.ghosts = set()
+        
     def flashGhosts(self):
         if self.flashingGhosts:
             for g in self.ghosts:
