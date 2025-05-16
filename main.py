@@ -59,8 +59,8 @@ class Piece:
         self.image = tk.PhotoImage(file="images/" + colours[self.player]+".png")
         self.image2 = tk.PhotoImage(file="images/" + colours[self.player]+"2.png")
         self.pieceID = main.theCanvas.create_image(self.position.coords[self.side][0],self.position.coords[self.side][1], image=self.image)
-        main.theCanvas.tag_bind(self.pieceID, "<Enter>", self.highlight)
-        main.theCanvas.tag_bind(self.pieceID, "<Leave>", self.unhighlight)
+        main.theCanvas.tag_bind(self.pieceID, "<Enter>", self.enter)
+        main.theCanvas.tag_bind(self.pieceID, "<Leave>", self.leave)
         main.theCanvas.tag_bind(self.pieceID, "<Button-1>", self.clicked)        
         main.allPieces[self.pieceID] = self
 
@@ -72,35 +72,36 @@ class Piece:
             print(f"Cannot move {oldposition.name} to {newposition.name}")
             return False
         
-    def highlight(self,e):
-        # already selected a different piece?
-        if self.main.gamestate.selectedPiece is not None and self.main.gamestate.selectedPiece != self:
-            return
-        if self.main.gamestate.currentPlayer == self.player and self.main.gamestate.turnstate == 1:
-            self.main.theCanvas.itemconfig(self.pieceID, image = self.image2)
-            self.getValidPlaces()
+    def enter(self,e):
+        pass
 
-    def unhighlight(self,e):
-        # already selected a different piece?
-        if self.main.gamestate.selectedPiece is not None and self.main.gamestate.selectedPiece != self:
-            return
-        if self.main.gamestate.selectedPiece != self:
-            self.main.theCanvas.itemconfig(self.pieceID, image = self.image)
-            self.main.clearGhosts()
+    def highlight(self):
+        self.main.theCanvas.itemconfig(self.pieceID, image = self.image2)
+        self.getValidPlaces()
+
+    def leave(self,e):
+        pass
+
+    def unhighlight(self):
+        self.main.theCanvas.itemconfig(self.pieceID, image = self.image)
+        self.main.clearGhosts()
 
     def clicked(self,e):
         if self.main.gamestate.turnstate == 1:
             #already got a piece selected?
-            if self.main.gamestate.selectedPiece is not None and self.main.gamestate.selectedPiece != self:
-                self.main.gamestate.selectedPiece.unhighlight(None)
-            #already selected this piece?
-            if self.main.gamestate.selectedPiece == self:
-                self.main.gamestate.selectedPiece = None
-                self.unhighlight(None)
-            else:
-                if len(self.possiblepositions)>0:
+            if self.main.gamestate.selectedPiece is not None:
+                #already selected this piece?
+                if self.main.gamestate.selectedPiece == self:
+                    self.unhighlight(None)
+                    self.main.gamestate.selectedPiece = None
+                    return
+                else:
+                    self.main.gamestate.selectedPiece.unhighlight(None)
                     self.main.gamestate.selectedPiece = self
-                    print(self)
+                    self.highlight(None)
+            if len(self.possiblepositions)>0:
+                self.main.gamestate.selectedPiece = self
+                print(self)
 
     def getValidPlaces(self):
         d1,d2 = self.main.gamestate.currentDice
