@@ -1,18 +1,14 @@
 import tkinter as tk
 import tkinter.font as tkFont
-import math
+import math, random
 from collections import defaultdict
 
 class Gamestate:
     def __init__(self, posArrays, main):
         self.players = [Player(i, posArrays[i], main) for i in range(4)]
         self.currentPlayer = 0
-        self.turnStatus = 0
-
-
-class Dice:
-    def __init__(self, canvas):
-        self.canvas = canvas
+        self.turnstate = 0
+        self.currentDice = [0,0]
 
 class Position:
     def __init__(self,x1,y1,x2,y2,name):
@@ -64,7 +60,7 @@ class Piece:
             return False
         
     def highlight(self,e):
-        if self.main.gamestate.currentPlayer == self.player and self.main.turnstatus == 1:
+        if self.main.gamestate.currentPlayer == self.player and self.main.gamestate.turnstate == 1:
             self.main.theCanvas.itemconfig(self.pieceID, image = self.image2)
 
     def unhighlight(self,e):
@@ -100,6 +96,7 @@ class App(tk.Tk):
         self.addConnectionFrame()
         self.addGameplayFrame()
         self.makeBoard()
+        self.loadDice()
         self.showFrame(1)
         #self.theCanvas.bind("<Motion>",self.testmouse)
         self.highlights = []
@@ -143,6 +140,11 @@ class App(tk.Tk):
         self.highlights.append(self.theCanvas.create_oval(nearestPos[1][0],nearestPos[1][1],nearestPos[1][0]+20,nearestPos[1][1]+20,fill="green" ))
 
         
+    def loadDice(self):
+        self.dice=[None]
+        for i in range(1,7):
+            self.dice.append((tk.PhotoImage(file="dice/" + str(i)+".png"),tk.PhotoImage(file="dice/" + str(i)+"a.png")))
+
 
     def addConnectionFrame(self):
         self.connectionFrame = tk.Frame(self, bg="#dba6ea")
@@ -167,7 +169,7 @@ class App(tk.Tk):
         self.infoBox.grid(row=2, column=1, sticky="NSEW")
         self.diceCanvas = tk.Canvas(self.gameplayFrame,width=200,height=300,bg="black")
         self.diceCanvas.grid(row=4,column=1)
-        rollbutton = tk.Button(self.gameplayFrame,text="Roll", font=self.smallmono, command = self.roll)
+        rollbutton = tk.Button(self.gameplayFrame,text="Roll", font=self.smallmono, command = lambda :self.roll(6))
         rollbutton.grid(row=5,column=1)
         self.gameplayFrame.rowconfigure(0,minsize=50)
         self.gameplayFrame.rowconfigure(1,minsize=50)
@@ -178,9 +180,21 @@ class App(tk.Tk):
         self.gameplayFrame.columnconfigure(1,weight=100)
         self.gameplayFrame.rowconfigure(6, weight=100)
         
-    def roll(self):
-        return
+    def roll(self, rolls):
+        if self.gamestate.turnstate == 0:
+            d1 = random.randint(1,6)
+            d2 = random.randint(1,6)
+            self.diceCanvas.delete(tk.ALL)
+            self.diceCanvas.create_image(100,80,image=random.choice(self.dice[d1]))
+            self.diceCanvas.create_image(100,210,image=random.choice(self.dice[d2]))
+            if rolls > 0:
+                self.after(100, lambda: self.roll(rolls-1))
+            else:
+                self.completeRoll(d1,d2)
 
+    def completeRoll(self,d1,d2):
+        self.gamestate.currentDice = [d1,d2]
+        self.gamestate.turnstate = 1
 
     def makePosArrays(self):
         f = open("places.txt","r")
@@ -289,10 +303,6 @@ class App(tk.Tk):
         self.ghoststate = True
         self.turnCounter = self.theCanvas.create_image(0,0,image = self.turnCounterImage)
         self.updateTurnCounter()
-        self.turnstatus = 0
-        self.addGhost(5,1)
-        self.addGhost(5,0)
-        self.addGhost(12,1)
         self.flashingGhosts = True
         self.flashGhosts()
         # the game loop is run on the following events
