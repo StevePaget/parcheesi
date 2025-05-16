@@ -375,8 +375,7 @@ class App(tk.Tk):
         self.ghoststate = True
         self.turnCounter = self.theCanvas.create_image(0,0,image = self.turnCounterImage)
         self.updateTurnCounter()
-        self.flashingGhosts = True
-        self.flashGhosts()
+        self.flashjob = False
         # the game loop is run on the following events
         # turn status 0: Waiting for dice roll
         # turn status 1: Dice rolled, waiting for player piece choice
@@ -424,8 +423,7 @@ class App(tk.Tk):
         self.ghosts.add(Ghost(pos,side,self))
         print("Add")
         print(len(self.ghosts))
-        if not self.flashingGhosts:
-            self.flashingGhosts = True
+        if not self.flashjob:
             self.flashGhosts()
             print("Start flash")
 
@@ -433,18 +431,18 @@ class App(tk.Tk):
         for g in self.ghosts:
             self.theCanvas.delete(g.id)
         self.ghosts = set()
-        self.flashingGhosts = False
+        if self.flashjob:
+            self.after_cancel(self.flashjob)
+            self.flashjob = None
         print("Stop flash")
         
     def flashGhosts(self):
-        print(len(self.ghosts))
-        if self.flashingGhosts:
-            for g in self.ghosts:
-                if self.ghoststate:
-                    self.theCanvas.itemconfig(g.id,state="hidden")
-                else:
-                    self.theCanvas.itemconfig(g.id,state="normal")
-            self.ghoststate = not self.ghoststate
-            self.after(500,self.flashGhosts)
+        for g in self.ghosts:
+            if self.ghoststate:
+                self.theCanvas.itemconfig(g.id,state="hidden")
+            else:
+                self.theCanvas.itemconfig(g.id,state="normal")
+        self.ghoststate = not self.ghoststate
+        self.flashjob = self.after(500,self.flashGhosts)
 
 game = App()
