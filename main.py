@@ -47,6 +47,11 @@ class Position:
         else:
             return False
 
+class Ghost:
+    def __init__(self,position,side,main):
+        self.position = position
+        self.main = main
+        self.id = self.main.theCanvas.create_image(position.coords[side][0],position.coords[side][1],image=self.main.ghostImage)
 
 class Piece:
     def __init__(self,player, position, side, main):
@@ -73,14 +78,20 @@ class Piece:
             return False
         
     def enter(self,e):
-        pass
+        if self.main.gamestate.turnstate != 1 or self.main.gamestate.currentPlayer != self.player:
+            return
+        if self.main.gamestate.selectedPiece is None: # nothing currently selected
+            self.highlight()
 
     def highlight(self):
         self.main.theCanvas.itemconfig(self.pieceID, image = self.image2)
         self.getValidPlaces()
 
     def leave(self,e):
-        pass
+        if self.main.gamestate.turnstate != 1 or self.main.gamestate.currentPlayer != self.player:
+            return
+        if self.main.gamestate.selectedPiece is None: #nothing selected
+            self.unhighlight()
 
     def unhighlight(self):
         self.main.theCanvas.itemconfig(self.pieceID, image = self.image)
@@ -88,24 +99,31 @@ class Piece:
 
     def clicked(self,e):
         if self.main.gamestate.turnstate == 1:
-            #already got a piece selected?
-            if self.main.gamestate.selectedPiece is not None:
-                #already selected this piece?
-                if self.main.gamestate.selectedPiece == self:
-                    self.unhighlight(None)
-                    self.main.gamestate.selectedPiece = None
-                    return
-                else:
-                    self.main.gamestate.selectedPiece.unhighlight(None)
-                    self.main.gamestate.selectedPiece = self
-                    self.highlight(None)
-            if len(self.possiblepositions)>0:
+            if self.main.gamestate.selectedPiece is None: # no selected piece
                 self.main.gamestate.selectedPiece = self
-                print(self)
+                if len(self.possiblepositions)>0:
+                    print("Fresh - showing spaces")
+                else:
+                    print("Fresh - No valid spaces")
+            else:
+                if self.main.gamestate.selectedPiece == self: #already selected this piece, so deselect
+                    self.unhighlight()
+                    self.main.gamestate.selectedPiece = None
+                    print("Deselected")
+                else: # other piece. cancel old one and select this
+                    self.main.gamestate.selectedPiece.unhighlight()
+                    self.main.gamestate.selectedPiece = self
+                    self.highlight()
+                    if len(self.possiblepositions)>0:
+                        print("swap - showing spaces")
+                    else:
+                        print("Swap - No valid spaces")
+
 
     def getValidPlaces(self):
         d1,d2 = self.main.gamestate.currentDice
         self.possiblepositions = set()
+        self.main.clearGhosts()
         # do they have any fives?
         if d1 == 5 or d2 == 5:
         # is this piece in the home?
@@ -403,20 +421,29 @@ class App(tk.Tk):
         self.theCanvas.coords(self.turnCounter, positions[self.gamestate.currentPlayer][0], positions[self.gamestate.currentPlayer][1])
 
     def addGhost(self,pos,side):
-        self.ghosts.add(self.theCanvas.create_image(pos.coords[side][0],pos.coords[side][1],image=self.ghostImage))
+        self.ghosts.add(Ghost(pos,side,self))
+        print("Add")
+        print(len(self.ghosts))
+        if not self.flashingGhosts:
+            self.flashingGhosts = True
+            self.flashGhosts()
+            print("Start flash")
 
     def clearGhosts(self):
         for g in self.ghosts:
-            self.theCanvas.delete(g)
+            self.theCanvas.delete(g.id)
         self.ghosts = set()
+        self.flashingGhosts = False
+        print("Stop flash")
         
     def flashGhosts(self):
+        print(len(self.ghosts))
         if self.flashingGhosts:
             for g in self.ghosts:
                 if self.ghoststate:
-                    self.theCanvas.itemconfig(g,state="hidden")
+                    self.theCanvas.itemconfig(g.id,state="hidden")
                 else:
-                    self.theCanvas.itemconfig(g,state="normal")
+                    self.theCanvas.itemconfig(g.id,state="normal")
             self.ghoststate = not self.ghoststate
             self.after(500,self.flashGhosts)
 
