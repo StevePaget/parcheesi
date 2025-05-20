@@ -8,8 +8,24 @@ class Gamestate:
         self.players = [Player(i, posArrays[i], main) for i in range(4)]
         self.currentPlayer = 0
         self.turnstate = 0
+        # the game loop is run on the following events
+        # turn state 0: Waiting for dice roll
+        # turn state 1: Dice rolled, MUST start a piece
+        # turn state 2: Dice Rolled: free choice
+        # turn state 3: Piece selected,must play to start position
+        # turn state 4: Piece selected, free play
+        # turn state 5: Turn complete - check for win
+
         self.currentDice = [0,0]
         self.selectedPiece = None
+        self.main = main
+
+    def getCurrentPlayer(self):
+        return self.players[self.currentPlayer]
+
+    def currentPosArray(self):
+        return self.players[self.currentPlayer].posarray
+
 
 class Position:
     def __init__(self,x1,y1,x2,y2,postype):
@@ -40,22 +56,38 @@ class Position:
         return True
     
     def canAdd(self,piece):
-        if self.contents[0] is None:
+        if self.contents[0] is None: # position is empty
             return 0
-        elif self.contents[1] is None and piece.player == self.contents[0].player:
+        elif self.contents[1] is None and piece.player == self.contents[0].player: 
+            # this player has one piece here, but there's a space
             return 1
+        elif self.contents[1] is None and piece.player != self.contents[0].player:
+            # there is a single opposing piece here
+            return 2
         else:
             return False
 
 class Ghost:
-    def __init__(self,position,side,main):
+    def __init__(self,position,side,main,ghosttype, diceroll ):
         self.position = position
         self.main = main
-        self.id = self.main.theCanvas.create_image(position.coords[side][0],position.coords[side][1],image=self.main.ghostImage)
+        if ghosttype == 0:
+           self.id = self.main.theCanvas.create_image(position.coords[side][0],position.coords[side][1],image=self.main.ghostImage)
+        else:
+            self.id = self.main.theCanvas.create_image(position.coords[side][0],position.coords[side][1],image=self.main.ghostBumpImage)
+        self.main.theCanvas.tag_bind(self.id,"<Button-1>",self.clicked)
+        self.diceroll = diceroll
+
+
+    def clicked(self,e):
+        print("played here" , self.main.gamestate.currentPosArray().index(self.position))
+        self.main.movePiece(self.position)
+
 
 class Piece:
     def __init__(self,player, position, side, main):
         self.position = position
+        position.addPiece(self)
         self.side = side
         self.player = player
         self.main = main
@@ -69,16 +101,17 @@ class Piece:
         main.theCanvas.tag_bind(self.pieceID, "<Button-1>", self.clicked)        
         main.allPieces[self.pieceID] = self
 
-    def move(self,oldposition, newposition):
+    def move(self, newposition):
         if newposition.addPiece(self):
-            oldposition.removePiece(self)
-            self.main.theCanvas.coords(self.pieceID, self.position.coords[self.side][0],self.position.coords[self.side][1],self.position.coords[self.side][0]+20,self.position.coords[self.side][1]+20)
+            self.main.theCanvas.coords(self.pieceID, self.position.coords[self.side][0],self.position.coords[self.side][1])
+            self.unhighlight()
+            return True
         else:
-            print(f"Cannot move {oldposition.name} to {newposition.name}")
+            print(f"Cannot move {self.position.name} to {newposition.name}")
             return False
         
     def enter(self,e):
-        if self.main.gamestate.turnstate != 1 or self.main.gamestate.currentPlayer != self.player:
+        if self.main.gamestate.turnstate not in [1,2] or self.main.gamestate.currentPlayer != self.player:
             return
         if self.main.gamestate.selectedPiece is None: # nothing currently selected
             self.highlight()
@@ -88,7 +121,7 @@ class Piece:
         self.getValidPlaces()
 
     def leave(self,e):
-        if self.main.gamestate.turnstate != 1 or self.main.gamestate.currentPlayer != self.player:
+        if self.main.gamestate.turnstate not in [1,2]  or self.main.gamestate.currentPlayer != self.player:
             return
         if self.main.gamestate.selectedPiece is None: #nothing selected
             self.unhighlight()
@@ -98,13 +131,14 @@ class Piece:
         self.main.clearGhosts()
 
     def clicked(self,e):
-        if self.main.gamestate.turnstate == 1:
+        if self.main.gamestate.turnstate in [1,2]:
             if self.main.gamestate.selectedPiece is None: # no selected piece
                 self.main.gamestate.selectedPiece = self
                 if len(self.possiblepositions)>0:
                     print("Fresh - showing spaces")
                 else:
                     print("Fresh - No valid spaces")
+                    self.main.displayMessage("No valid places for that piece")
             else:
                 if self.main.gamestate.selectedPiece == self: #already selected this piece, so deselect
                     self.unhighlight()
@@ -118,23 +152,33 @@ class Piece:
                         print("swap - showing spaces")
                     else:
                         print("Swap - No valid spaces")
+                        self.main.displayMessage("No valid places for that piece")
 
 
     def getValidPlaces(self):
         d1,d2 = self.main.gamestate.currentDice
         self.possiblepositions = set()
         self.main.clearGhosts()
-        # do they have any fives?
-        if d1 == 5 or d2 == 5:
         # is this piece in the home?
-            if self.position.type == "start":            
-                # check d1
-                if d1 == 5:
-                    pos = self.main.gamestate.players[self.player].posarray[2]
-                    side = pos.canAdd(self)
-                    if side is not False:
-                        self.main.addGhost(pos,side)
-                        self.possiblepositions.add(pos)
+        if self.position.type == "start" and (d1 == 5 or d2 == 5 or d1+d2 == 5):         
+            pos = self.main.gamestate.players[self.player].posarray[2]
+            side = pos.canAdd(self)
+            if side in [0,1]:
+                self.main.addGhost(pos,side,0,5)
+                self.possiblepositions.add(pos)
+            elif side ==2:
+                self.main.addGhost(pos,0,1,5)
+                self.possiblepositions.add(pos)
+
+        else: # not in home
+            # options are d1, d2 or d1+d2
+            for rollvalue in [d1,d2,d1+d2]:
+
+                pass
+
+
+
+
 
 
 class Player:
@@ -146,7 +190,7 @@ class Player:
         self.pieces.append(Piece(playerID, posarray[0], 0, main))
         self.pieces.append(Piece(playerID, posarray[0], 1, main))
         self.pieces.append(Piece(playerID, posarray[1], 0, main))
-        self.pieces.append(Piece(playerID, posarray[1], 1, main))
+        self.pieces.append(Piece(playerID, posarray[2], 0, main))
 
     def getPosition(self, original, distance):
         start = self.posarray.index(original)
@@ -169,7 +213,6 @@ class App(tk.Tk):
         self.makeBoard()
         self.loadDice()
         self.showFrame(1)
-        #self.theCanvas.bind("<Motion>",self.testmouse)
         self.highlights = []
         self.allPieces = {}
         self.startGame()
@@ -255,7 +298,7 @@ class App(tk.Tk):
         if self.gamestate.turnstate == 0:
             d1 = random.randint(1,6)
             d2 = random.randint(1,6)
-            d1=5
+            d1 = 5
             self.diceCanvas.delete(tk.ALL)
             self.diceCanvas.create_image(100,80,image=random.choice(self.dice[d1]))
             self.diceCanvas.create_image(100,210,image=random.choice(self.dice[d2]))
@@ -266,7 +309,21 @@ class App(tk.Tk):
 
     def completeRoll(self,d1,d2):
         self.gamestate.currentDice = [d1,d2]
-        self.gamestate.turnstate = 1
+        if d1 == 5 or d2 == 5:
+            # they got a 5
+            if None in self.gamestate.currentPosArray()[2].contents and (self.gamestate.currentPosArray()[0].contents != [None,None] or self.gamestate.currentPosArray()[0].contents != [None,None]):
+                self.infoBox.config(text="You must move a piece from start \nStart box")
+                self.gamestate.turnstate = 1
+                return
+        self.infoBox.config(text="Choose a piece")
+        self.turnstate = 2
+
+    def movePiece(self, destination):
+        
+        if destination.canAdd(self.gamestate.selectedPiece):
+            print("OK")
+            self.gamestate.selectedPiece.move(destination)
+        
 
     def makePosArrays(self):
         f = open("textfiles/places.txt","r")
@@ -371,18 +428,12 @@ class App(tk.Tk):
         self.sortlayers()
         self.turnCounterImage = tk.PhotoImage(file = "images/turnbutton.png")
         self.ghostImage = tk.PhotoImage(file="images/ghost.png")
+        self.ghostBumpImage = tk.PhotoImage(file="images/ghostBump.png")
         self.ghosts = set()
         self.ghoststate = True
         self.turnCounter = self.theCanvas.create_image(0,0,image = self.turnCounterImage)
         self.updateTurnCounter()
         self.flashjob = False
-        # the game loop is run on the following events
-        # turn status 0: Waiting for dice roll
-        # turn status 1: Dice rolled, waiting for player piece choice
-        # turn status 2: Piece chosen. Display target positions. Waiting for choice of destination
-        # turn status 3: Destination chosen. Move piece. Deal with bounces.
-        #                Deduct die value from choices and repeat status 1 if necessary
-        # turn status 4: Turn complete. Detect if game won. Switch players, go to status 0
 
     def displayMessage(self, message):
         self.infoBox.config(text=message)
@@ -419,13 +470,11 @@ class App(tk.Tk):
         positions = [(200,200), (200,800),(800,200),(800,800)]
         self.theCanvas.coords(self.turnCounter, positions[self.gamestate.currentPlayer][0], positions[self.gamestate.currentPlayer][1])
 
-    def addGhost(self,pos,side):
-        self.ghosts.add(Ghost(pos,side,self))
-        print("Add")
-        print(len(self.ghosts))
+    def addGhost(self,pos,side,type,diceroll):
+        self.ghosts.add(Ghost(pos,side,self,type,diceroll))
         if not self.flashjob:
             self.flashGhosts()
-            print("Start flash")
+ 
 
     def clearGhosts(self):
         for g in self.ghosts:
@@ -434,7 +483,7 @@ class App(tk.Tk):
         if self.flashjob:
             self.after_cancel(self.flashjob)
             self.flashjob = None
-        print("Stop flash")
+
         
     def flashGhosts(self):
         for g in self.ghosts:
